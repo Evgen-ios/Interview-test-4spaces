@@ -54,13 +54,10 @@ class ShopImpl: Shop {
     /// - Parameter product: product to add to the Shop
     /// - Returns: false if the product with same id already exists in the Shop, true – otherwise
     func addNewProduct(product: Product) -> Bool {
-        
         if products.contains(where: { $0.id == product.id }) {
-            print("INFO: This product id: \(product.id) already exists in the Shop")
             return false
         } else {
             products.append(product)
-            print("INFO: The product with id: \(product.id) was added in the Shop")
             return true
         }
     }
@@ -69,44 +66,44 @@ class ShopImpl: Shop {
     /// - Parameter id: unique identifier
     /// - Returns: true if the product with same id existed in the Shop, false – otherwise
     func deleteProduct(id: String) -> Bool {
-        
         guard let product = products.first(where: { $0.id == id }) else {
-            print("INFO: The product with id: \(id) not found in this Shop")
             return false
         }
         
-        print("INFO: The product with id: \(id) was deleted from the Shop")
         products.removeAll(where: { $0.id == product.id })
         return true
     }
     
     /// Seach product by name
     /// - Parameter searchString: product name
-    /// - Returns: 10 product names containing the specified string of empty if not found 10 product names
+    /// - Returns: 10 product names containing the specified string. If there are several products with the same name, producer's name is added to product's name in the format "<producer> - <product>", otherwise returns simply "<product>"
     func listProductsByName(searchString: String) -> Set<String> {
-        var productNames: [String] = []
-        let productsFilteredByName = products.filter({ $0.name == searchString })
+        var productNames = Set<String>()
+        let productsFilteredByName = products
+            .filter({ $0.name.contains(searchString) })
+            .sorted(by: { $0.name < $1.name })
         
         for product in productsFilteredByName {
-            productNames.append(productNames.contains(product.name)
-                                ? "\(product.producer) - \(product.name)"
-                                :  product.name)
+            if productsFilteredByName.filter({ $0.name == product.name }).count > 1 {
+                productNames.insert("\(product.producer) - \(product.name)")
+            } else {
+                productNames.insert("\(product.name)")
+            }
         }
         
-        return productNames.count >= limit
-        ? Set<String>(productNames.prefix(limit))
-        : []
+        return productNames.count > limit ? Set(Array(productNames)[0..<limit]) : productNames
     }
     
     /// Seach product by name
     /// - Parameter searchString: product name
     /// - Returns: 10 product names whose producer contains the specified string, result is ordered by producers
     func listProductsByProducer(searchString: String) -> [String] {
-        let productsFilteredByProducers = products.filter({ $0.producer == searchString })
-        
-        return productsFilteredByProducers.count >= limit
-        ? productsFilteredByProducers[0..<limit].map({ $0.producer })
-        : []
+        let producersFilteredByProducers = products
+            .filter({ $0.producer.contains(searchString) })
+            .sorted(by: { $0.producer < $1.producer })
+        let names = producersFilteredByProducers.map({ $0.name })
+
+        return producersFilteredByProducers.count > limit ? Array(names[0..<limit]) : names
     }
 }
 
