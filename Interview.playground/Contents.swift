@@ -47,12 +47,16 @@ protocol Shop {
 // TODO: your implementation goes here
 class ShopImpl: Shop {
     
+    /// The limit of products count for returns
+    let limit = 10
+    
     /// Adds a new product object to the Shop
     /// - Parameter product: product to add to the Shop
     /// - Returns: false if the product with same id already exists in the Shop, true – otherwise
     func addNewProduct(product: Product) -> Bool {
+        
         if products.contains(where: { $0.id == product.id }) {
-            print("INFO: Sorry but this product id: \(product.id) already exists in the Shop")
+            print("INFO: This product id: \(product.id) already exists in the Shop")
             return false
         } else {
             products.append(product)
@@ -65,21 +69,44 @@ class ShopImpl: Shop {
     /// - Parameter id: unique identifier
     /// - Returns: true if the product with same id existed in the Shop, false – otherwise
     func deleteProduct(id: String) -> Bool {
-        products.first(where: { $0. })
+        
+        guard let product = products.first(where: { $0.id == id }) else {
+            print("INFO: The product with id: \(id) not found in this Shop")
+            return false
+        }
+        
+        print("INFO: The product with id: \(id) was deleted from the Shop")
+        products.removeAll(where: { $0.id == product.id })
+        return true
     }
     
     /// Seach product by name
     /// - Parameter searchString: product name
-    /// - Returns: 10 product names containing the specified string
+    /// - Returns: 10 product names containing the specified string of empty if not found 10 product names
     func listProductsByName(searchString: String) -> Set<String> {
-
+        var productNames: [String] = []
+        let productsFilteredByName = products.filter({ $0.name == searchString })
+        
+        for product in productsFilteredByName {
+            productNames.append(productNames.contains(product.name)
+                                ? "\(product.producer) - \(product.name)"
+                                :  product.name)
+        }
+        
+        return productNames.count >= limit
+        ? Set<String>(productNames.prefix(limit))
+        : []
     }
     
     /// Seach product by name
     /// - Parameter searchString: product name
     /// - Returns: 10 product names whose producer contains the specified string, result is ordered by producers
     func listProductsByProducer(searchString: String) -> [String] {
+        let productsFilteredByProducers = products.filter({ $0.producer == searchString })
         
+        return productsFilteredByProducers.count >= limit
+        ? productsFilteredByProducers[0..<limit].map({ $0.producer })
+        : []
     }
 }
 
@@ -113,7 +140,7 @@ func test(lib: Shop) {
     
     var byProducer: [String] = lib.listProductsByProducer(searchString: "Producer")
     assert(byProducer.count == 10)
-
+    
     byProducer = lib.listProductsByProducer(searchString: "Some Producer")
     assert(byProducer.count == 4)
     assert(byProducer[0] == "Some Product1")
