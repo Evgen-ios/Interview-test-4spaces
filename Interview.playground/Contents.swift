@@ -48,22 +48,17 @@ class ShopImpl: Shop {
     let limit = 10
     
     /// All products
-    var products: [Int: Product] = [:]
+    var products: [String: Product] = [:]
     
     /// Adds a new product object to the Shop
     /// - Parameter product: product to add to the Shop
     /// - Returns: false if the product with same id already exists in the Shop, true – otherwise
     func addNewProduct(product: Product) -> Bool {
-        
-        guard let productID = Int(product.id) else {
+        guard products[product.id]?.id != product.id else {
             return false
         }
         
-        guard products[productID]?.id != product.id else {
-            return false
-        }
-        
-        products[productID] = product
+        products[product.id] = product
         return true
     }
     
@@ -71,12 +66,7 @@ class ShopImpl: Shop {
     /// - Parameter id: unique identifier
     /// - Returns: true if the product with same id existed in the Shop, false – otherwise
     func deleteProduct(id: String) -> Bool {
-        
-        guard let productID = Int(id) else {
-            return false
-        }
-        
-        guard (products.removeValue(forKey: productID) != nil) else {
+        guard (products.removeValue(forKey: id) != nil) else {
             return false
         }
         
