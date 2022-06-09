@@ -7,9 +7,6 @@ import Foundation
  – Performance optimizations for listProductsByName and listProductsByProducer are optional
  */
 
-/// All products
-var products: [Product] = []
-
 struct Product {
     let id: String; // unique identifier
     let name: String;
@@ -50,27 +47,39 @@ class ShopImpl: Shop {
     /// The limit of products count for returns
     let limit = 10
     
+    /// All products
+    var products: [Int: Product] = [:]
+    
     /// Adds a new product object to the Shop
     /// - Parameter product: product to add to the Shop
     /// - Returns: false if the product with same id already exists in the Shop, true – otherwise
     func addNewProduct(product: Product) -> Bool {
-        if products.contains(where: { $0.id == product.id }) {
+        
+        guard let productID = Int(product.id) else {
             return false
-        } else {
-            products.append(product)
-            return true
         }
+        
+        guard products[productID]?.id != product.id else {
+            return false
+        }
+        
+        products[productID] = product
+        return true
     }
     
     /// Deletes the product with the specified id from the Shop
     /// - Parameter id: unique identifier
     /// - Returns: true if the product with same id existed in the Shop, false – otherwise
     func deleteProduct(id: String) -> Bool {
-        guard let product = products.first(where: { $0.id == id }) else {
+        
+        guard let productID = Int(id) else {
             return false
         }
         
-        products.removeAll(where: { $0.id == product.id })
+        guard (products.removeValue(forKey: productID) != nil) else {
+            return false
+        }
+        
         return true
     }
     
@@ -79,15 +88,16 @@ class ShopImpl: Shop {
     /// - Returns: 10 product names containing the specified string. If there are several products with the same name, producer's name is added to product's name in the format "<producer> - <product>", otherwise returns simply "<product>"
     func listProductsByName(searchString: String) -> Set<String> {
         var productNames = Set<String>()
+        
         let productsFilteredByName = products
-            .filter({ $0.name.contains(searchString) })
-            .sorted(by: { $0.name < $1.name })
+            .filter({ $0.value.name.contains(searchString) })
+            .sorted(by: { $0.value.name < $1.value.name })
         
         for product in productsFilteredByName {
-            if productsFilteredByName.filter({ $0.name == product.name }).count > 1 {
-                productNames.insert("\(product.producer) - \(product.name)")
+            if productsFilteredByName.filter({ $0.value.name == product.value.name }).count > 1 {
+                productNames.insert("\(product.value.producer) - \(product.value.name)")
             } else {
-                productNames.insert("\(product.name)")
+                productNames.insert("\(product.value.name)")
             }
         }
         
@@ -98,12 +108,12 @@ class ShopImpl: Shop {
     /// - Parameter searchString: product name
     /// - Returns: 10 product names whose producer contains the specified string, result is ordered by producers
     func listProductsByProducer(searchString: String) -> [String] {
-        let producersFilteredByProducers = products
-            .filter({ $0.producer.contains(searchString) })
-            .sorted(by: { $0.producer < $1.producer })
-        let names = producersFilteredByProducers.map({ $0.name })
-
-        return producersFilteredByProducers.count > limit ? Array(names[0..<limit]) : names
+        let productsFilteredByProducer = products
+            .filter({ $0.value.producer.contains(searchString) })
+            .sorted(by: { $0.value.producer < $1.value.producer })
+        
+        let names = productsFilteredByProducer.map({ $0.value.name })
+        return productsFilteredByProducer.count > limit ? Array(names[0..<limit]) : names
     }
 }
 
